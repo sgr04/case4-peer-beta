@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peer-Group Beta Rechner – Case IV</title>
+<style>
+  :root {
+    --primary: #1F4E78;
+    --secondary: #2E75B6;
+    --accent: #FFC000;
+    --light: #DDEBF7;
+    --bg: #F7FAFC;
+    --text: #1A2333;
+    --muted: #6B7280;
+    --border: #CBD5E1;
+    --result-bg: #FFF3CD;
+    --success: #15803D;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0; padding: 24px;
+    background: var(--bg); color: var(--text);
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header {
+    background: var(--primary); color: white;
+    padding: 24px; border-radius: 8px 8px 0 0;
+  }
+  header h1 { margin: 0 0 6px; font-size: 22px; }
+  header p { margin: 0; opacity: .85; font-size: 14px; }
+  section {
+    background: white; padding: 22px;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  section:last-of-type { border-radius: 0 0 8px 8px; }
+  h2 {
+    margin: 0 0 14px; color: var(--primary);
+    font-size: 17px; padding-bottom: 6px;
+    border-bottom: 2px solid var(--secondary);
+  }
+  .formula {
+    background: var(--light); padding: 8px 12px;
+    border-radius: 4px; font-family: "Courier New", monospace;
+    font-size: 13px; color: var(--primary);
+    margin: 8px 0;
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td {
+    padding: 8px 10px; text-align: right;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  th {
+    background: var(--light); color: var(--primary);
+    font-weight: 600; text-align: center;
+  }
+  th.left, td.left { text-align: left; }
+  input[type="number"] {
+    width: 110px; padding: 6px 8px;
+    border: 1px solid var(--border); border-radius: 4px;
+    text-align: right; font-size: 14px;
+    font-family: inherit;
+  }
+  input[type="number"]:focus {
+    outline: none; border-color: var(--secondary);
+    box-shadow: 0 0 0 2px rgba(46,117,182,.2);
+  }
+  .calc { color: #475569; font-variant-numeric: tabular-nums; }
+  .result {
+    background: var(--result-bg); padding: 14px 18px;
+    border-radius: 6px; margin-top: 12px;
+    border-left: 4px solid var(--accent);
+  }
+  .result-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-top: 14px;
+  }
+  .result-card {
+    background: var(--light); padding: 16px;
+    border-radius: 6px; border-left: 4px solid var(--secondary);
+  }
+  .result-card .label { font-size: 13px; color: var(--muted); }
+  .result-card .value {
+    font-size: 28px; font-weight: 700;
+    color: var(--primary); margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .target-inputs {
+    display: flex; gap: 16px; align-items: end;
+    flex-wrap: wrap; margin-top: 8px;
+  }
+  .target-inputs .field { display: flex; flex-direction: column; }
+  .target-inputs label {
+    font-size: 13px; color: var(--muted); margin-bottom: 4px;
+  }
+  .controls { margin-top: 14px; display: flex; gap: 8px; }
+  button {
+    background: var(--secondary); color: white;
+    border: none; padding: 8px 16px; border-radius: 4px;
+    font-size: 14px; cursor: pointer; font-family: inherit;
+  }
+  button:hover { background: var(--primary); }
+  button.secondary {
+    background: white; color: var(--secondary);
+    border: 1px solid var(--secondary);
+  }
+  .summary-row td { background: var(--light); font-weight: 600; }
+  .total-row td { background: var(--accent); color: var(--primary); font-weight: 700; }
+  footer {
+    margin-top: 14px; font-size: 12px; color: var(--muted);
+    text-align: center;
+  }
+  .note { font-size: 12px; color: var(--muted); margin-top: 6px; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Peer-Group Beta Rechner – Case IV</h1>
+    <p>Berechnet das Asset-Beta einer Peer-Group (β<sub>FK</sub> = 0, Tax-Shield unsicher) und das hypothetische Equity-Beta des Zielunternehmens bei gewählter Zielkapitalstruktur.</p>
+  </header>
+
+  <section>
+    <h2>1) Peer-Group Eingaben (max. 10 Peers)</h2>
+    <div class="formula">β<sub>A,Peer i</sub> = (E/V)<sub>i</sub> · β<sub>E,i</sub> &nbsp;&nbsp;|&nbsp;&nbsp; (β<sub>FK,Peer</sub> = 0, Tax-Shield unsicher)</div>
+    <table id="peer-table">
+      <thead>
+        <tr>
+          <th class="left">#</th>
+          <th class="left">Peer-Unternehmen (optional)</th>
+          <th>Equity-Beta β<sub>E</sub></th>
+          <th>FK / GK</th>
+          <th>E / V</th>
+          <th>β<sub>A,Peer</sub></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="controls">
+      <button onclick="loadExample()">Beispiel laden (Case IV Peers)</button>
+      <button class="secondary" onclick="clearAll()">Alle Felder leeren</button>
+    </div>
+    <p class="note">Hinweis: Felder ohne Werte werden ignoriert. FK/GK ist als Dezimalzahl einzugeben (z.B. 0.45 für 45 %).</p>
+  </section>
+
+  <section>
+    <h2>2) Asset-Beta der Peer-Group</h2>
+    <div class="formula">β<sub>A,Mittelwert</sub> = ⅀ β<sub>A,i</sub> / n &nbsp;&nbsp;|&nbsp;&nbsp; β<sub>A,Median</sub> = mittlerer Wert der sortierten β<sub>A,i</sub></div>
+    <div class="result-grid">
+      <div class="result-card">
+        <div class="label">Mittelwert (gleichgewichtet)</div>
+        <div class="value" id="mean-out">–</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Median</div>
+        <div class="value" id="median-out">–</div>
+      </div>
+    </div>
+    <p class="note" id="n-info">Anzahl gültiger Peers: 0</p>
+  </section>
+
+  <section>
+    <h2>3) Zielkapitalstruktur des Zielunternehmens</h2>
+    <div class="formula">β<sub>E,Ziel</sub> = β<sub>A,Peer-Group</sub> · (1 + FK/EK) &nbsp;&nbsp;(β<sub>FK</sub> = 0)</div>
+    <div class="target-inputs">
+      <div class="field">
+        <label>FK / GK (Ziel)</label>
+        <input type="number" id="target-dv" value="0.45" step="0.01" min="0" max="1" oninput="recompute()">
+      </div>
+      <div class="field">
+        <label>EK / GK (Ziel, automatisch)</label>
+        <input type="number" id="target-ev" value="0.55" step="0.01" min="0" max="1" disabled>
+      </div>
+      <div class="field">
+        <label>FK / EK (Ziel, automatisch)</label>
+        <input type="number" id="target-de" value="0.8182" step="0.01" disabled>
+      </div>
+    </div>
+
+    <div class="result-grid" style="margin-top: 22px;">
+      <div class="result-card">
+        <div class="label">β<sub>E,Ziel</sub> (basierend auf Mittelwert)</div>
+        <div class="value" id="beta-e-mean">–</div>
+      </div>
+      <div class="result-card">
+        <div class="label">β<sub>E,Ziel</sub> (basierend auf Median)</div>
+        <div class="value" id="beta-e-median">–</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Case IV: Kapitalkosten · Sheep &amp; Giraffe Chocolate Company · Universität Zürich, Institut für Finance
+  </footer>
+</div>
+
+<script>
+const N_PEERS = 10;
+const tbody = document.querySelector("#peer-table tbody");
+
+// Build peer rows
+for (let i = 1; i <= N_PEERS; i++) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td class="left">${i}</td>
+    <td class="left"><input type="text" id="name-${i}" placeholder="Peer ${i}" style="width:90%;border:1px solid var(--border);border-radius:4px;padding:6px;font-family:inherit;font-size:14px;"></td>
+    <td><input type="number" id="be-${i}" step="0.01" oninput="recompute()" placeholder="–"></td>
+    <td><input type="number" id="dv-${i}" step="0.01" min="0" max="1" oninput="recompute()" placeholder="–"></td>
+    <td class="calc" id="ev-${i}">–</td>
+    <td class="calc" id="ba-${i}">–</td>
+  `;
+  tbody.appendChild(tr);
+}
+
+// Summary row in table
+const trSummary = document.createElement("tr");
+trSummary.className = "summary-row";
+trSummary.innerHTML = `<td class="left" colspan="5">Mittelwert β<sub>A</sub> der Peer-Group</td><td class="calc" id="mean-row">–</td>`;
+tbody.appendChild(trSummary);
+const trMedian = document.createElement("tr");
+trMedian.className = "summary-row";
+trMedian.innerHTML = `<td class="left" colspan="5">Median β<sub>A</sub> der Peer-Group</td><td class="calc" id="median-row">–</td>`;
+tbody.appendChild(trMedian);
+
+function fmt(x, d=4) {
+  if (x === null || x === undefined || isNaN(x)) return "–";
+  return Number(x).toFixed(d);
+}
+
+function median(arr) {
+  if (arr.length === 0) return null;
+  const sorted = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+}
+
+function recompute() {
+  const assetBetas = [];
+  for (let i = 1; i <= N_PEERS; i++) {
+    const be = parseFloat(document.getElementById(`be-${i}`).value);
+    const dv = parseFloat(document.getElementById(`dv-${i}`).value);
+    const evCell = document.getElementById(`ev-${i}`);
+    const baCell = document.getElementById(`ba-${i}`);
+    if (!isNaN(be) && !isNaN(dv) && dv >= 0 && dv < 1) {
+      const ev = 1 - dv;
+      const ba = ev * be; // β_FK = 0
+      evCell.textContent = fmt(ev);
+      baCell.textContent = fmt(ba);
+      assetBetas.push(ba);
+    } else {
+      evCell.textContent = "–";
+      baCell.textContent = "–";
+    }
+  }
+
+  const n = assetBetas.length;
+  const mean = n > 0 ? assetBetas.reduce((a, b) => a + b, 0) / n : null;
+  const med = median(assetBetas);
+
+  document.getElementById("mean-out").textContent = fmt(mean);
+  document.getElementById("median-out").textContent = fmt(med);
+  document.getElementById("mean-row").textContent = fmt(mean);
+  document.getElementById("median-row").textContent = fmt(med);
+  document.getElementById("n-info").textContent =
+    `Anzahl gültiger Peers: ${n}`;
+
+  // Target
+  const dv_t = parseFloat(document.getElementById("target-dv").value);
+  if (!isNaN(dv_t) && dv_t >= 0 && dv_t < 1) {
+    const ev_t = 1 - dv_t;
+    const de_t = dv_t / ev_t;
+    document.getElementById("target-ev").value = ev_t.toFixed(4);
+    document.getElementById("target-de").value = de_t.toFixed(4);
+
+    if (mean !== null) {
+      // β_E = β_A · (1 + D/E) since β_FK = 0
+      const beE_mean = mean * (1 + de_t);
+      document.getElementById("beta-e-mean").textContent = fmt(beE_mean);
+    } else {
+      document.getElementById("beta-e-mean").textContent = "–";
+    }
+    if (med !== null) {
+      const beE_med = med * (1 + de_t);
+      document.getElementById("beta-e-median").textContent = fmt(beE_med);
+    } else {
+      document.getElementById("beta-e-median").textContent = "–";
+    }
+  } else {
+    document.getElementById("beta-e-mean").textContent = "–";
+    document.getElementById("beta-e-median").textContent = "–";
+  }
+}
+
+function loadExample() {
+  // Case IV peers: equity beta and FK/GK from balance sheet
+  const peers = [
+    { name: "Maestro Chocolate AG",   be: 1.53, dv: 780/1910 },
+    { name: "Springer Sweets AG",     be: 1.39, dv: 620/1530 },
+    { name: "Gaier - Chocolatier SA", be: 1.28, dv: 470/1210 },
+  ];
+  clearAll();
+  for (let i = 0; i < peers.length; i++) {
+    document.getElementById(`name-${i+1}`).value = peers[i].name;
+    document.getElementById(`be-${i+1}`).value = peers[i].be;
+    document.getElementById(`dv-${i+1}`).value = peers[i].dv.toFixed(4);
+  }
+  document.getElementById("target-dv").value = 0.45;
+  recompute();
+}
+
+function clearAll() {
+  for (let i = 1; i <= N_PEERS; i++) {
+    document.getElementById(`name-${i}`).value = "";
+    document.getElementById(`be-${i}`).value = "";
+    document.getElementById(`dv-${i}`).value = "";
+  }
+  recompute();
+}
+
+// Initialize with example so user sees it working
+loadExample();
+</script>
+</body>
+</html>
